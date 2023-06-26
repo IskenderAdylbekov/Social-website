@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-f6_2x@tcyk5-6$b1%_+5fliy06)jv$qnx%)k$v7s)erzb49-uv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["mysite.com", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -38,9 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # 3rd party
     "django_countries",
-    # local
+    "social_django",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -142,4 +144,29 @@ MEDIA_ROOT = BASE_DIR / "media"
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "account.authentication.EmailAuthBackend",
+    "social_core.backends.facebook.FacebookOAuth2",
+    "social_core.backends.google.GoogleOAuth2",
+]
+
+SOCIAL_AUTH_FACEBOOK_KEY = "3350471368551529"
+SOCIAL_AUTH_FACEBOOK_SECRET = "42d52206dce7e5a9508d566912b509c5"
+SOCIAL_AUTH_FACEBOOK_SCOPE = ["email"]
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = (
+    "202506295084-ij7108kq701j2hfpb0pup9iupk99rje5.apps.googleusercontent.com"
+)
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
+
+SITE_ID = 1
+
+SOCIAL_AUTH_PIPELINE = [
+    "social_core.pipeline.social_auth.social_details",
+    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.auth_allowed",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.user.create_user",
+    # "account.authentication.create_profile",
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
 ]

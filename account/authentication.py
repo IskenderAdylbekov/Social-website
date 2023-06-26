@@ -22,3 +22,10 @@ class EmailAuthBackend:
             return CustomUser.objects.get(pk=user_id)
         except CustomUser.DoesNotExist:
             return None
+
+
+# def create_profile(backend, user, *args, **kwargs):
+#     """
+#     Create user profile for social authentication
+#     """
+#     CustomUser.objects.get_or_create(username=user)
