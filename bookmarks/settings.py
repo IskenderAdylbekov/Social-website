@@ -39,10 +39,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    # local
+    "images.apps.ImagesConfig",
     # 3rd party
     "django_countries",
     "social_django",
     "django_extensions",
+    "easy_thumbnails",
 ]
 
 MIDDLEWARE = [
@@ -170,3 +173,10 @@ SOCIAL_AUTH_PIPELINE = [
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 ]
+
+
+if DEBUG:
+    import mimetypes
+
+    mimetypes.add_type("application/javascript", ".js", True)
+    mimetypes.add_type("text/css", ".css", True)

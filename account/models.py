@@ -11,4 +11,4 @@ class CustomUser(AbstractUser):
     photo = models.ImageField(upload_to="users/%Y/%m/%d/", blank=True)
 
     def __str__(self) -> str:
-        return f"Profile of {self.username}"
+        return self.username
