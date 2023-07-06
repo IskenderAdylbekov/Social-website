@@ -1,14 +1,18 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 from .forms import LoginForm, CustomUserRegistrationForm, CustomUserEditForm
+from .models import Contact, CustomUser
+from actions.utils import create_action
+from actions.models import Action
 
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 def user_login(request):
@@ -34,7 +38,16 @@ def user_login(request):
 
 @login_required
 def dashboard(request):
-    return render(request, "account/dashboard.html", {"section": "dashboard"})
+    # Display all actions by default
+    actions = Action.objects.exclude(user=request.user)
+    following_ids = request.user.following.values_list("id", flat=True)
+    if following_ids:
+        # if user is following others, retrieve only their actions
+        actions = actions.filter(user_id__in=following_ids)
+    actions = actions.select_related("user").prefetch_related("target")[:10]
+    return render(
+        request, "account/dashboard.html", {"section": "dashboard", "actions": actions}
+    )
 
 
 def register(request):
@@ -49,6 +62,7 @@ def register(request):
             new_user.save()
             # create user profile
             CustomUser.objects.create(username=new_user)
+            create_action(new_user, "has created an account")
             return render(request, "account/register_done.html", {"new_user": new_user})
     else:
         user_form = CustomUserRegistrationForm()
@@ -69,3 +83,38 @@ def edit(request):
     else:
         user_form = CustomUserEditForm(instance=request.user)
     return render(request, "account/edit.html", {"user_form": user_form})
+
+
+@login_required
+def user_list(request):
+    users = User.objects.filter(is_active=True)
+    return render(
+        request, "account/user/list.html", {"section": "people", "users": users}
+    )
+
+
+@login_required
+def user_detail(request, username):
+    user = get_object_or_404(User, username=username, is_active=True)
+    return render(
+        request, "account/user/detail.html", {"section": "people", "user": user}
+    )
+
+
+@require_POST
+@login_required
+def user_follow(request):
+    user_id = request.POST.get("id")
+    action = request.POST.get("action")
+    if user_id and action:
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            if action == "follow":
+                Contact.objects.get_or_create(user_from=request.user, user_to=user)
+                create_action(request.user, "is following", user)
+            else:
+                Contact.objects.filter(user_from=request.user, user_to=user).delete()
+            return JsonResponse({"status": "ok"})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"status": "error"})
+    return JsonResponse({"status": "error"})
